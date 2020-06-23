@@ -7,7 +7,9 @@ package http
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -24,9 +26,15 @@ type HTTPSource struct {
 	logger logger.Logger
 }
 
+type credentials struct {
+	User     string `json:"user"`
+	Password string `json:"password"`
+}
+
 type httpMetadata struct {
-	URL    string `json:"url"`
-	Method string `json:"method"`
+	URL         string       `json:"url"`
+	Method      string       `json:"method"`
+	Credentials *credentials `json:"credentials"`
 }
 
 // NewHTTP returns a new HTTPSource
@@ -53,7 +61,15 @@ func (h *HTTPSource) Init(metadata bindings.Metadata) error {
 
 func (h *HTTPSource) get(url string) ([]byte, error) {
 	client := http.Client{Timeout: time.Second * 60}
-	resp, err := client.Get(url)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	addCredentials(req, h.metadata.Credentials)
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -86,13 +102,37 @@ func (h *HTTPSource) Operations() []bindings.OperationKind {
 }
 
 func (h *HTTPSource) Invoke(req *bindings.InvokeRequest) (*bindings.InvokeResponse, error) {
+
 	client := http.Client{Timeout: time.Second * 5}
-	resp, err := client.Post(h.metadata.URL, "application/json; charset=utf-8", bytes.NewBuffer(req.Data))
+
+	r, err := http.NewRequest("POST", h.metadata.URL, bytes.NewBuffer(req.Data))
 	if err != nil {
 		return nil, err
 	}
+	r.Header.Set("Content-Type", "application/json; charset=utf-8")
+
+	addCredentials(r, h.metadata.Credentials)
+
+	resp, err := client.Do(r)
+	if err != nil {
+		return nil, err
+	}
+
 	if resp != nil && resp.Body != nil {
 		resp.Body.Close()
 	}
 	return nil, nil
+}
+
+func addCredentials(req *http.Request, credentials *credentials) {
+	if credentials != nil && credentials.User != "" && credentials.Password != "" {
+		addBasicAuthHeader(req, credentials.User, credentials.Password)
+	}
+}
+
+func addBasicAuthHeader(request *http.Request, user, password string) {
+	auth := user + ":" + password
+	encodedAuth := base64.StdEncoding.EncodeToString([]byte(auth))
+
+	request.Header.Set("Authorization", fmt.Sprintf("Basic %s", encodedAuth))
 }
