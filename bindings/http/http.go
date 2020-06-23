@@ -115,9 +115,22 @@ func (h *HTTPSource) Invoke(req *bindings.InvokeRequest) (*bindings.InvokeRespon
 	}
 
 	if resp != nil && resp.Body != nil {
+		data, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+
 		resp.Body.Close()
+
+		return &bindings.InvokeResponse{
+			Data:     data,
+			Metadata: map[string]string{"status": resp.Status},
+		}, nil
 	}
-	return nil, nil
+
+	return &bindings.InvokeResponse{
+		Metadata: map[string]string{"status": resp.Status},
+	}, nil
 }
 
 func addCredentials(req *http.Request, user, password string) {
