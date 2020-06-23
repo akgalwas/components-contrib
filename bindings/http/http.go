@@ -26,15 +26,11 @@ type HTTPSource struct {
 	logger logger.Logger
 }
 
-type credentials struct {
+type httpMetadata struct {
+	URL      string `json:"url"`
+	Method   string `json:"method"`
 	User     string `json:"user"`
 	Password string `json:"password"`
-}
-
-type httpMetadata struct {
-	URL         string       `json:"url"`
-	Method      string       `json:"method"`
-	Credentials *credentials `json:"credentials"`
 }
 
 // NewHTTP returns a new HTTPSource
@@ -67,7 +63,7 @@ func (h *HTTPSource) get(url string) ([]byte, error) {
 		return nil, err
 	}
 
-	addCredentials(req, h.metadata.Credentials)
+	addCredentials(req, h.metadata.User, h.metadata.Password)
 
 	resp, err := client.Do(req)
 	if err != nil {
@@ -111,7 +107,7 @@ func (h *HTTPSource) Invoke(req *bindings.InvokeRequest) (*bindings.InvokeRespon
 	}
 	r.Header.Set("Content-Type", "application/json; charset=utf-8")
 
-	addCredentials(r, h.metadata.Credentials)
+	addCredentials(r, h.metadata.User, h.metadata.Password)
 
 	resp, err := client.Do(r)
 	if err != nil {
@@ -124,9 +120,9 @@ func (h *HTTPSource) Invoke(req *bindings.InvokeRequest) (*bindings.InvokeRespon
 	return nil, nil
 }
 
-func addCredentials(req *http.Request, credentials *credentials) {
-	if credentials != nil && credentials.User != "" && credentials.Password != "" {
-		addBasicAuthHeader(req, credentials.User, credentials.Password)
+func addCredentials(req *http.Request, user, password string) {
+	if user != "" && password != "" {
+		addBasicAuthHeader(req, user, password)
 	}
 }
 
