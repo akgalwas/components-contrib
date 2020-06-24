@@ -24,8 +24,6 @@ import (
 type HTTPSource struct {
 	metadata httpMetadata
 
-	bindingsMetadata bindings.Metadata
-
 	logger logger.Logger
 }
 
@@ -43,7 +41,6 @@ func NewHTTP(logger logger.Logger) *HTTPSource {
 
 // Init performs metadata parsing
 func (h *HTTPSource) Init(metadata bindings.Metadata) error {
-	h.bindingsMetadata = metadata
 
 	b, err := json.Marshal(metadata.Properties)
 	if err != nil {
@@ -123,7 +120,7 @@ func (h *HTTPSource) Invoke(req *bindings.InvokeRequest) (*bindings.InvokeRespon
 	}
 
 	if resp.StatusCode == http.StatusUnauthorized {
-		return nil, errors.New(fmt.Sprintf("Unauthorized: %v %v %v", h.metadata, h.bindingsMetadata.Properties, req.Metadata))
+		return nil, errors.New(fmt.Sprintf("Unauthorized!"))
 	}
 
 	if resp != nil && resp.Body != nil {
