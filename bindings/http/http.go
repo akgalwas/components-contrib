@@ -119,7 +119,7 @@ func (h *HTTPSource) Invoke(req *bindings.InvokeRequest) (*bindings.InvokeRespon
 	}
 
 	if resp.StatusCode == http.StatusUnauthorized {
-		return nil, errors.New("Unauthorized!")
+		return nil, errors.New(fmt.Sprintf("Unauthorized: %v", h.metadata))
 	}
 
 	if resp != nil && resp.Body != nil {
