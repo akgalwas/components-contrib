@@ -95,7 +95,8 @@ func (h *HTTPSource) Read(handler func(*bindings.ReadResponse) error) error {
 }
 
 func (h *HTTPSource) Operations() []bindings.OperationKind {
-	return []bindings.OperationKind{bindings.CreateOperation}
+	return []bindings.OperationKind{bindings.CreateOperation,
+		bindings.GetOperation}
 }
 
 func (h *HTTPSource) Invoke(req *bindings.InvokeRequest) (*bindings.InvokeResponse, error) {
