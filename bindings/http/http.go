@@ -101,7 +101,7 @@ func (h *HTTPSource) Invoke(req *bindings.InvokeRequest) (*bindings.InvokeRespon
 
 	client := http.Client{Timeout: time.Second * 5}
 
-	r, err := http.NewRequest("POST", h.metadata.URL, bytes.NewBuffer(req.Data))
+	r, err := http.NewRequest(h.metadata.Method, h.metadata.URL, bytes.NewBuffer(req.Data))
 	if err != nil {
 		return nil, err
 	}
